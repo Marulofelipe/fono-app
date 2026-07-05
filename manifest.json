@@ -1,0 +1,30 @@
+{
+  "name": "Fonoaudiología Premium — Dra. Silvia Pérez",
+  "short_name": "Fono Premium",
+  "description": "Gestión clínica fonoaudiológica con IA, voz y escaneo de bonos.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#00796B",
+  "lang": "es-CO",
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
