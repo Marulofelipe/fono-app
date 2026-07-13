@@ -1,0 +1,6 @@
+{
+  "name": "Silvia Margarita Pérez F. - Fonoaudiología Premium",
+  "description": "Aplicación premium de fonoaudiología con dictado por voz de terapias, gestión de pacientes y escaneo de bonos para la fonoaudióloga Silvia Margarita Pérez F.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

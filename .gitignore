@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-v3/
+dist-v4/
+dist-v5/
+dist-v6/
+.env.local
+*.zip
+.DS_Store

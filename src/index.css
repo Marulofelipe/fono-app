@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", sans-serif;
+  --font-callout: "Plus Jakarta Sans", sans-serif;
+
+  --color-primary: #005265;
+  --color-primary-container: #006c84;
+  --color-secondary: #b70b62; /* Vibrant Pink */
+  --color-tertiary: #c4d600; /* Lime Green */
+  --color-purple-accent: #7D42A4; /* Purple */
+  --color-surface-tint: #00677e;
+  --color-surface-bg: #f9f9fc;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Custom PWA and iOS styles */
+.ios-blur {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.luxury-shadow {
+  box-shadow: 0px 4px 20px rgba(0, 82, 101, 0.04);
+}
+
+.scanner-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #005265, transparent);
+  box-shadow: 0 0 15px #005265;
+  animation: scan 3s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+.pulse-animation {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.active-pulse {
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e2e5;
+  border-radius: 10px;
+}
+
+body {
+  background-color: #f9f9fc;
+  -webkit-tap-highlight-color: transparent;
+  font-family: "Manrope", sans-serif;
+}
