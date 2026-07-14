@@ -502,6 +502,17 @@ export default function App() {
 
   const handleEditPatient = (e: React.FormEvent) => { e.preventDefault(); if (!editingPatient) return; setPacientes(prev => prev.map(p => p.id === editingPatient.id ? { ...editingPatient } : p)); setEditingPatient(null); alert("Datos de la ficha actualizados con éxito."); };
 
+  // ---- Terapia CRUD ----
+  const handleEditTerapia = (id: string, cambios: Partial<Terapia>) => {
+    setTerapias(prev => prev.map(t => t.id === id ? { ...t, ...cambios } : t));
+    alert("Terapia actualizada con éxito.");
+  };
+
+  const handleDeleteTerapia = (id: string) => {
+    setTerapias(prev => prev.filter(t => t.id !== id));
+    alert("Terapia eliminada.");
+  };
+
   const triggerProfilePicUpload = () => { if (fileInputRef.current) fileInputRef.current.click(); };
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => { if (typeof reader.result === 'string') { setProfilePic(reader.result); localStorage.setItem('silvia_profile_pic', reader.result); alert("¡Foto de perfil actualizada!"); } }; reader.readAsDataURL(file); } };
 
@@ -579,7 +590,7 @@ export default function App() {
 
         {/* REGISTROS */}
         {activeTab === 'registros' && activeView === 'registros' && (
-          <RegistrosView terapias={terapias} onViewPatient={(pid) => { setSelectedPacienteId(pid); setActiveTab('pacientes'); setActiveView('paciente_detalle'); }} />
+          <RegistrosView terapias={terapias} onViewPatient={(pid) => { setSelectedPacienteId(pid); setActiveTab('pacientes'); setActiveView('paciente_detalle'); }} onEditTerapia={handleEditTerapia} onDeleteTerapia={handleDeleteTerapia} />
         )}
 
         {/* BONOS */}
