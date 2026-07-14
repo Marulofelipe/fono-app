@@ -343,8 +343,172 @@ export default function App() {
   }, [pacientes, agenda]);
 
   const handleVoiceIntents = (text: string) => {
-    // Schedule appointment
-    if (text.includes('atender a') || text.includes('agenda') || text.includes('cita para') || text.includes('cita con') || text.includes('agendar a')) {
+    // ===== NAVIGATION =====
+    if (text.includes('ir a') || text.includes('ve a') || text.includes('abrir') || text.includes('mostrar')) {
+      if (text.includes('registros') || text.includes('historial') || text.includes('evolución') || text.includes('evolucion')) {
+        setIntentNotification({ message: "Navegando a Registros", actionText: "Ir", callback: () => { setActiveTab('registros'); setActiveView('registros'); setIntentNotification(null); stopListeningGeneral(); } });
+        return;
+      }
+      if (text.includes('bonos') || text.includes('escanear') || text.includes('voucher')) {
+        setIntentNotification({ message: "Navegando a Bonos", actionText: "Ir", callback: () => { setActiveTab('bonos'); setActiveView('bonos'); setIntentNotification(null); stopListeningGeneral(); } });
+        return;
+      }
+      if (text.includes('pacientes') || text.includes('directorio') || text.includes('fichas')) {
+        setIntentNotification({ message: "Navegando a Pacientes", actionText: "Ir", callback: () => { setActiveTab('pacientes'); setActiveView('pacientes'); setIntentNotification(null); stopListeningGeneral(); } });
+        return;
+      }
+      if (text.includes('agenda') || text.includes('calendario') || text.includes('citas')) {
+        setIntentNotification({ message: "Navegando a Agenda", actionText: "Ir", callback: () => { setActiveTab('agenda'); setActiveView('agenda'); setIntentNotification(null); stopListeningGeneral(); } });
+        return;
+      }
+      if (text.includes('ajustes') || text.includes('configuración') || text.includes('configuracion') || text.includes('perfil')) {
+        setIntentNotification({ message: "Navegando a Ajustes", actionText: "Ir", callback: () => { setActiveTab('ajustes'); setActiveView('ajustes'); setIntentNotification(null); stopListeningGeneral(); } });
+        return;
+      }
+      if (text.includes('inicio') || text.includes('home') || text.includes('principal')) {
+        setIntentNotification({ message: "Navegando a Inicio", actionText: "Ir", callback: () => { setActiveTab('inicio'); setActiveView('inicio'); setIntentNotification(null); stopListeningGeneral(); } });
+        return;
+      }
+    }
+
+    // ===== CREATE PATIENT =====
+    if (text.includes('crear paciente') || text.includes('nuevo paciente') || text.includes('agregar paciente') || text.includes('registrar paciente')) {
+      // Parse patient data from the same utterance
+      const t = text;
+      let nombre = "", id = "", empresa = "Colsanitas", diagnostico = "", edad = 30, telefono = "", direccion = "";
+      const nombreMatch = t.match(/(?:crear|nuevo|agregar|registrar)\s+paciente\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+?)(?:\s*,?\s*(?:cédula|cedula|id|con|diagnóstico|diagnostico|empresa|aseguradora|teléfono|telefono|dirección|direccion|edad)|$)/i);
+      if (nombreMatch) nombre = nombreMatch[1].trim().replace(/\b\w/g, c => c.toUpperCase());
+      const idMatch = t.match(/(?:cédula|cedula|id|identificación)\s*(?:de|de ciudadanía)?\s*(\d+)/i);
+      if (idMatch) id = idMatch[1];
+      else { const numMatch = t.match(/\b(\d{6,10})\b/); if (numMatch) id = numMatch[1]; }
+      if (t.includes("medisanitas")) empresa = "Medisanitas";
+      const diagMatch = t.match(/(?:diagnóstico|diagnostico|con diagnóstico|con diagnostico)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+?)(?:\s*,?\s*(?:cédula|cedula|id|empresa|aseguradora|teléfono|telefono|dirección|direccion|edad)|$)/i);
+      if (diagMatch) diagnostico = diagMatch[1].trim().replace(/\b\w/g, c => c.toUpperCase());
+      const edadMatch = t.match(/(\d+)\s*(?:años|anos|de edad)/i); if (edadMatch) edad = parseInt(edadMatch[1]) || 30;
+      const telMatch = t.match(/(?:teléfono|telefono|celular)\s*(?:es|de)?\s*(\d[\d\s-]{6,12})/i); if (telMatch) telefono = telMatch[1].trim();
+      const dirMatch = t.match(/(?:dirección|direccion|vive en|reside en)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s#-]+?)(?:\s*,?\s*(?:cédula|cedula|teléfono|telefono|diagnóstico|diagnostico|edad|empresa)|$)/i);
+      if (dirMatch) direccion = dirMatch[1].trim().replace(/\b\w/g, c => c.toUpperCase());
+
+      if (!nombre) {
+        setIntentNotification({ message: "No pude detectar el nombre. Di: 'Crear paciente Juan Pérez cédula 1234567'", actionText: "Entendido", callback: () => setIntentNotification(null) });
+        return;
+      }
+
+      const nuevoPaciente: Paciente = {
+        id: id || Date.now().toString().slice(-7),
+        nombre, empresa: empresa as any,
+        telefono: telefono || "Por registrar",
+        diagnostico: diagnostico || "Por definir",
+        sesionesTotales: 10, sesionesCompletadas: 0, progresoPlan: 0,
+        proximaCita: "No programada", edad,
+        direccion: direccion || undefined, estado: 'Activo'
+      };
+
+      const faltan = [];
+      if (!id) faltan.push("cédula");
+
+      setIntentNotification({
+        message: faltan.length > 0
+          ? `Crear: ${nombre} (${empresa}) — ⚠️ Falta cédula`
+          : `Crear paciente: ${nombre} (${id}) — ${empresa}`,
+        actionText: "Crear",
+        callback: () => {
+          setPacientes(prev => [nuevoPaciente, ...prev]);
+          setIntentNotification(null);
+          stopListeningGeneral();
+          alert(`✓ Paciente ${nombre} creado con éxito`);
+        }
+      });
+      return;
+    }
+
+    // ===== VIEW AGENDA =====
+    if (text.includes('ver agenda') || text.includes('mostrar agenda') || text.includes('qué citas') || text.includes('que citas') || text.includes('cuáles son las citas') || text.includes('cuales son las citas')) {
+      let filtro = "";
+      if (text.includes("hoy")) filtro = "Hoy";
+      else if (text.includes("mañana") || text.includes("manana")) filtro = "Mañana";
+      else if (text.includes("lunes")) filtro = "Lunes";
+      else if (text.includes("martes")) filtro = "Martes";
+      else if (text.includes("miércoles") || text.includes("miercoles")) filtro = "Miércoles";
+      else if (text.includes("jueves")) filtro = "Jueves";
+      else if (text.includes("viernes")) filtro = "Viernes";
+
+      const citasFiltradas = filtro ? agenda.filter(c => c.fecha.toLowerCase().includes(filtro.toLowerCase())) : agenda;
+      const lista = citasFiltradas.slice(0, 5).map(c => `${c.pacienteNombre} ${c.hora}`).join(', ');
+      const msg = citasFiltradas.length > 0
+        ? `${filtro || 'Todas'}: ${citasFiltradas.length} cita(s) — ${lista}`
+        : `No hay citas ${filtro ? 'para ' + filtro : 'programadas'}`;
+
+      setIntentNotification({
+        message: msg,
+        actionText: "Ver Agenda",
+        callback: () => { setActiveTab('agenda'); setActiveView('agenda'); setIntentNotification(null); stopListeningGeneral(); }
+      });
+      return;
+    }
+
+    // ===== COUNT BONOS =====
+    if (text.includes('cuántos bonos') || text.includes('cuantos bonos') || text.includes('bonos tiene') || text.includes('bonos de')) {
+      let target: Paciente | null = null;
+      for (const p of pacientes) { if (text.includes(p.nombre.toLowerCase())) { target = p; break; } }
+      if (!target) { for (const p of pacientes) { const fn = p.nombre.split(' ')[0].toLowerCase(); if (fn.length > 2 && text.includes(fn)) { target = p; break; } } }
+
+      if (target) {
+        const bonosPaciente = bonos.filter(b => b.pacienteId === target!.id || b.pacienteNombre?.toLowerCase().includes(target!.nombre.toLowerCase()));
+        const validos = bonosPaciente.filter(b => b.estado === 'Válido').length;
+        setIntentNotification({
+          message: `${target.nombre} tiene ${bonosPaciente.length} bono(s) — ${validos} válidos`,
+          actionText: "Ver Bonos",
+          callback: () => { setActiveTab('bonos'); setActiveView('bonos'); setIntentNotification(null); stopListeningGeneral(); }
+        });
+      } else {
+        setIntentNotification({ message: "No encontré ese paciente. Di su nombre completo.", actionText: "OK", callback: () => setIntentNotification(null) });
+      }
+      return;
+    }
+
+    // ===== NEXT PATIENT =====
+    if (text.includes('siguiente paciente') || text.includes('próximo paciente') || text.includes('proximo paciente') || text.includes('quién sigue') || text.includes('quien sigue')) {
+      if (agenda.length > 0) {
+        const proxima = agenda[0];
+        setIntentNotification({
+          message: `Siguiente: ${proxima.pacienteNombre} — ${proxima.fecha} a las ${proxima.hora}`,
+          actionText: "Ver Agenda",
+          callback: () => { setActiveTab('agenda'); setActiveView('agenda'); setIntentNotification(null); stopListeningGeneral(); }
+        });
+      } else {
+        setIntentNotification({ message: "No hay más citas en la agenda.", actionText: "OK", callback: () => setIntentNotification(null) });
+      }
+      return;
+    }
+
+    // ===== TIME SPENT =====
+    if (text.includes('tiempo') && (text.includes('anterior') || text.includes('último') || text.includes('ultimo') || text.includes('pasado'))) {
+      if (terapias.length > 0) {
+        const ultima = terapias[0];
+        setIntentNotification({
+          message: `Última sesión: ${ultima.pacienteNombre} — ${ultima.fecha} a las ${ultima.hora}`,
+          actionText: "Ver Registros",
+          callback: () => { setActiveTab('registros'); setActiveView('registros'); setIntentNotification(null); stopListeningGeneral(); }
+        });
+      } else {
+        setIntentNotification({ message: "No hay terapias registradas aún.", actionText: "OK", callback: () => setIntentNotification(null) });
+      }
+      return;
+    }
+
+    // ===== ADD BONO / SCAN =====
+    if (text.includes('agregar bono') || text.includes('escanear bono') || text.includes('nuevo bono') || text.includes('scanear bono')) {
+      setIntentNotification({
+        message: "Abriendo Cámara de Bonos...",
+        actionText: "Ir",
+        callback: () => { setActiveTab('bonos'); setActiveView('bonos'); setIntentNotification(null); stopListeningGeneral(); }
+      });
+      return;
+    }
+
+    // ===== SCHEDULE APPOINTMENT =====
+    if (text.includes('atender a') || text.includes('agenda') || text.includes('cita para') || text.includes('cita con') || text.includes('agendar a') || text.includes('nueva cita')) {
       let detectedPatient = "", pacienteId: string | undefined;
       for (const p of pacientes) { if (text.includes(p.nombre.toLowerCase())) { detectedPatient = p.nombre; pacienteId = p.id; break; } }
       if (!detectedPatient) { for (const p of pacientes) { const fn = p.nombre.split(' ')[0].toLowerCase(); if (fn.length > 2 && text.includes(fn)) { detectedPatient = p.nombre; pacienteId = p.id; break; } } }
@@ -353,22 +517,53 @@ export default function App() {
       let time = "08:00 am";
       const timeMatch = text.match(/a las\s+(\d+(?::\d+)?\s*(?:am|pm|a\s*m|p\s*m)?)/);
       if (timeMatch) time = timeMatch[1];
-      if (!detectedPatient) { const nameMatch = text.match(/(?:atender a|cita con|agendar a)\s+([a-z\s]+?)\s+(?:a las|el|para)/); if (nameMatch) detectedPatient = nameMatch[1].trim().replace(/\b\w/g, c => c.toUpperCase()); else detectedPatient = "Paciente Desconocido"; }
+      if (!detectedPatient) { const nameMatch = text.match(/(?:atender a|cita con|agendar a|nueva cita)\s+([a-z\s]+?)\s+(?:a las|el|para)/); if (nameMatch) detectedPatient = nameMatch[1].trim().replace(/\b\w/g, c => c.toUpperCase()); else detectedPatient = "Paciente Desconocido"; }
       const newCita: Cita = { id: 'c_' + Date.now(), pacienteId, pacienteNombre: detectedPatient, fecha: day, hora: time };
       setIntentNotification({ message: `Agendar: ${detectedPatient} (${day} a las ${time})`, actionText: "Confirmar", callback: () => { setAgenda(prev => [newCita, ...prev]); if (pacienteId) setPacientes(prev => prev.map(p => p.id === pacienteId ? { ...p, proximaCita: `${day}, ${time}` } : p)); setActiveTab('agenda'); setActiveView('agenda'); setIntentNotification(null); stopListeningGeneral(); } });
       return;
     }
-    // Update patient
-    if (text.includes('actualizar datos de') || text.includes('actualizar a') || text.includes('editar a') || text.includes('editar datos de')) {
+
+    // ===== EDIT PATIENT =====
+    if (text.includes('actualizar datos de') || text.includes('actualizar a') || text.includes('editar a') || text.includes('editar datos de') || text.includes('modificar paciente')) {
       let target: Paciente | null = null;
       for (const p of pacientes) { const fn = p.nombre.split(' ')[0].toLowerCase(); if (text.includes(fn) || text.includes(p.nombre.toLowerCase())) { target = p; break; } }
       if (target) { const pt = target; setIntentNotification({ message: `Actualizar datos de ${pt.nombre}`, actionText: "Modificar", callback: () => { setEditingPatient(pt); setActiveTab('pacientes'); setActiveView('pacientes'); setIntentNotification(null); stopListeningGeneral(); } }); }
       return;
     }
-    // Start therapy
-    if (text.includes('atendí a') || text.includes('atendi a') || text.includes('terapia de') || text.includes('terapia con')) {
-      const eduardo = pacientes.find(p => p.nombre.toLowerCase().includes('eduardo'));
-      if (eduardo) setIntentNotification({ message: `Iniciar Terapia: Eduardo Castro`, actionText: "Iniciar", callback: () => { startTherapySession(eduardo); setIntentNotification(null); stopListeningGeneral(); } });
+
+    // ===== START THERAPY =====
+    if (text.includes('iniciar terapia') || text.includes('atendí a') || text.includes('atendi a') || text.includes('terapia de') || text.includes('terapia con')) {
+      let target: Paciente | null = null;
+      for (const p of pacientes) { if (text.includes(p.nombre.toLowerCase())) { target = p; break; } }
+      if (!target) { for (const p of pacientes) { const fn = p.nombre.split(' ')[0].toLowerCase(); if (fn.length > 2 && text.includes(fn)) { target = p; break; } } }
+      if (target) {
+        setIntentNotification({ message: `Iniciar Terapia: ${target.nombre}`, actionText: "Iniciar", callback: () => { startTherapySession(target!); setIntentNotification(null); stopListeningGeneral(); } });
+      } else {
+        setIntentNotification({ message: "No encontré el paciente. Di su nombre.", actionText: "OK", callback: () => setIntentNotification(null) });
+      }
+      return;
+    }
+
+    // ===== VIEW RECORDS OF PATIENT =====
+    if (text.includes('ver registros de') || text.includes('historial de') || text.includes('evoluciones de') || text.includes('terapias de')) {
+      let target: Paciente | null = null;
+      for (const p of pacientes) { if (text.includes(p.nombre.toLowerCase())) { target = p; break; } }
+      if (!target) { for (const p of pacientes) { const fn = p.nombre.split(' ')[0].toLowerCase(); if (fn.length > 2 && text.includes(fn)) { target = p; break; } } }
+      if (target) {
+        const count = terapias.filter(t => t.pacienteId === target!.id).length;
+        setIntentNotification({ message: `${target.nombre} tiene ${count} registro(s) clínico(s)`, actionText: "Ver Registros", callback: () => { setActiveTab('registros'); setActiveView('registros'); setIntentNotification(null); stopListeningGeneral(); } });
+      }
+      return;
+    }
+
+    // ===== HELP =====
+    if (text.includes('ayuda') || text.includes('qué puedo') || text.includes('que puedo') || text.includes('comandos') || text.includes('opciones')) {
+      setIntentNotification({
+        message: "Puedo: crear pacientes, ver agenda, contar bonos, iniciar terapia, ir a cualquier sección, agendar citas, editar pacientes, y más.",
+        actionText: "👍",
+        callback: () => setIntentNotification(null)
+      });
+      return;
     }
   };
 
