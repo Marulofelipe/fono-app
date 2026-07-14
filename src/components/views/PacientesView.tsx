@@ -155,8 +155,8 @@ export function PacientesView({
                 <input type="text" required placeholder="e.g. 1029384" value={newPatient.id} onChange={(e) => onNewPatientChange({ ...newPatient, id: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
               </div>
               <div>
-                <label className="text-[8px] font-bold text-outline block mb-0.5">EDAD*</label>
-                <input type="number" required placeholder="Años" min="1" max="110" value={newPatient.edad} onChange={(e) => onNewPatientChange({ ...newPatient, edad: parseInt(e.target.value) || 30 })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
+                <label className="text-[8px] font-bold text-outline block mb-0.5">FECHA NACIMIENTO</label>
+                <input type="date" value={newPatient.fechaNacimiento || ''} onChange={(e) => onNewPatientChange({ ...newPatient, fechaNacimiento: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
               </div>
             </div>
             <div>
@@ -180,6 +180,41 @@ export function PacientesView({
               <label className="text-[8px] font-bold text-outline block mb-0.5">DIAGNÓSTICO</label>
               <input type="text" placeholder="e.g. Afasia Motora" value={newPatient.diagnostico} onChange={(e) => onNewPatientChange({ ...newPatient, diagnostico: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
             </div>
+            <div>
+              <label className="text-[8px] font-bold text-outline block mb-0.5">DIRECCIÓN</label>
+              <input type="text" placeholder="Calle 123 #45-67" value={newPatient.direccion || ''} onChange={(e) => onNewPatientChange({ ...newPatient, direccion: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
+            </div>
+
+            {/* Acudiente section */}
+            <div className="border-t border-outline-variant/15 pt-2.5">
+              <h4 className="text-[9px] font-bold text-secondary uppercase tracking-wider mb-2 flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs">contact_emergency</span>
+                Acudiente / Encargado (opcional)
+              </h4>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-[8px] font-bold text-outline block mb-0.5">NOMBRE DEL ACUDIENTE</label>
+                  <input type="text" placeholder="e.g. Carlos Pérez" value={newPatient.acudienteNombre || ''} onChange={(e) => onNewPatientChange({ ...newPatient, acudienteNombre: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[8px] font-bold text-outline block mb-0.5">TELÉFONO ACUDIENTE</label>
+                    <input type="text" placeholder="310 456 7890" value={newPatient.acudienteTelefono || ''} onChange={(e) => onNewPatientChange({ ...newPatient, acudienteTelefono: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[8px] font-bold text-outline block mb-0.5">PARENTESCO</label>
+                    <select value={newPatient.acudienteParentesco || ''} onChange={(e) => onNewPatientChange({ ...newPatient, acudienteParentesco: e.target.value })} className="w-full bg-white border border-outline-variant/30 rounded-lg p-2 text-xs outline-none font-bold text-primary">
+                      <option value="">Seleccionar...</option>
+                      <option value="Hijo">Hijo/a</option>
+                      <option value="Esposo">Esposo/a</option>
+                      <option value="Hermano">Hermano/a</option>
+                      <option value="Otro">Otro</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <button type="submit" className="w-full bg-primary text-white font-bold py-2.5 rounded-xl shadow-md active:scale-95 text-[11px]">
               Registrar Paciente
             </button>

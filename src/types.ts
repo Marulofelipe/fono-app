@@ -11,10 +11,15 @@ export interface Paciente {
   sesionesTotales: number;
   proximaCita?: string; // e.g., "Mañana, 10:00"
   edad?: number; // Edad del paciente
+  fechaNacimiento?: string; // Formato YYYY-MM-DD
   direccion?: string;
   latitud?: number;
   longitud?: number;
   estado?: EstadoPaciente; // Estado del paciente (Activo por defecto)
+  // Acudiente / Encargado (para adultos mayores o pacientes dependientes)
+  acudienteNombre?: string;
+  acudienteTelefono?: string;
+  acudienteParentesco?: string; // "Hijo", "Esposo", "Hermano", "Otro"
 }
 
 export interface Terapia {

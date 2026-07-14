@@ -97,6 +97,36 @@ export function PacienteDetalle({ paciente, terapias, bonos, onBack, onEdit, onD
         </div>
       </div>
 
+      {/* Acudiente / Encargado */}
+      {(paciente.acudienteNombre || paciente.acudienteTelefono) && (
+        <div className="bg-white rounded-2xl border border-outline-variant/20 shadow-sm p-3.5">
+          <h3 className="font-display font-bold text-xs text-primary flex items-center gap-1 mb-2 pb-1.5 border-b border-outline-variant/10">
+            <span className="material-symbols-outlined text-sm">contact_emergency</span>
+            Acudiente / Encargado
+          </h3>
+          <div className="space-y-1 text-[11px]">
+            {paciente.acudienteNombre && (
+              <div className="flex justify-between">
+                <span className="text-outline font-semibold">Nombre:</span>
+                <span className="font-bold text-on-surface">{paciente.acudienteNombre}</span>
+              </div>
+            )}
+            {paciente.acudienteTelefono && (
+              <div className="flex justify-between">
+                <span className="text-outline font-semibold">Teléfono:</span>
+                <span className="font-bold text-on-surface">{paciente.acudienteTelefono}</span>
+              </div>
+            )}
+            {paciente.acudienteParentesco && (
+              <div className="flex justify-between">
+                <span className="text-outline font-semibold">Parentesco:</span>
+                <span className="font-bold text-on-surface">{paciente.acudienteParentesco}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Linked Bonos */}
       <div className="bg-white rounded-2xl border border-outline-variant/20 shadow-sm p-3.5">
         <div className="flex justify-between items-center mb-2 pb-1.5 border-b border-outline-variant/10">
