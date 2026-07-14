@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Paciente } from '../../types';
+import { searchCie11, formatCieCode, CieCode } from '../../data/cie11';
 
 interface PacientesViewProps {
   pacientes: Paciente[];
@@ -26,6 +27,29 @@ export function PacientesView({
   detectedPatientData, missingFields, onConfirmDetected, onDiscardDetected,
   onDictMissingFields, onStartVoicePaciente, onSelectPatient
 }: PacientesViewProps) {
+  const [cieSearchQuery, setCieSearchQuery] = useState('');
+  const [cieResults, setCieResults] = useState<CieCode[]>([]);
+  const [showCieDropdown, setShowCieDropdown] = useState(false);
+
+  const handleCieSearch = (value: string) => {
+    setCieSearchQuery(value);
+    if (value.length >= 2) {
+      const results = searchCie11(value);
+      setCieResults(results);
+      setShowCieDropdown(results.length > 0);
+    } else {
+      setCieResults([]);
+      setShowCieDropdown(false);
+    }
+  };
+
+  const selectCieCode = (cie: CieCode) => {
+    const formatted = formatCieCode(cie);
+    onNewPatientChange({ ...newPatient, diagnostico: cie.descripcion, diagnosticoCie: formatted });
+    setCieSearchQuery('');
+    setCieResults([]);
+    setShowCieDropdown(false);
+  };
   return (
     <div className="flex flex-col gap-4 animate-fade-in py-2 flex-1">
       <div className="flex justify-between items-center">
@@ -176,9 +200,32 @@ export function PacientesView({
                 <input type="text" placeholder="315 789 4512" value={newPatient.telefono} onChange={(e) => onNewPatientChange({ ...newPatient, telefono: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
               </div>
             </div>
-            <div>
-              <label className="text-[8px] font-bold text-outline block mb-0.5">DIAGNÓSTICO</label>
-              <input type="text" placeholder="e.g. Afasia Motora" value={newPatient.diagnostico} onChange={(e) => onNewPatientChange({ ...newPatient, diagnostico: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
+            <div className="relative">
+              <label className="text-[8px] font-bold text-outline block mb-0.5">DIAGNÓSTICO (CIE-11)</label>
+              <input type="text" placeholder="Escriba para buscar: afasia, disfagia, disartria..." value={newPatient.diagnostico} onChange={(e) => { onNewPatientChange({ ...newPatient, diagnostico: e.target.value }); handleCieSearch(e.target.value); }} onFocus={() => { if (cieResults.length > 0) setShowCieDropdown(true); }} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
+              {newPatient.diagnosticoCie && (
+                <div className="mt-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-emerald-600 text-xs">check_circle</span>
+                  <span className="text-[9px] font-bold text-emerald-700">{newPatient.diagnosticoCie}</span>
+                  <button type="button" onClick={() => onNewPatientChange({ ...newPatient, diagnosticoCie: undefined })} className="text-outline hover:text-red-500 text-[9px]">✕</button>
+                </div>
+              )}
+              {showCieDropdown && cieResults.length > 0 && (
+                <div className="absolute z-20 w-full mt-1 bg-white border border-outline-variant/30 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                  {cieResults.map((cie) => (
+                    <button
+                      key={cie.codigo}
+                      type="button"
+                      onClick={() => selectCieCode(cie)}
+                      className="w-full text-left px-3 py-2 hover:bg-primary/5 transition-colors border-b border-outline-variant/10 last:border-0"
+                    >
+                      <span className="text-[10px] font-bold text-primary">{cie.codigo}</span>
+                      <span className="text-[10px] text-on-surface ml-2">{cie.descripcion}</span>
+                      <span className="text-[8px] text-outline ml-1">({cie.categoria})</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className="text-[8px] font-bold text-outline block mb-0.5">DIRECCIÓN</label>

@@ -89,6 +89,9 @@ export function PacienteDetalle({ paciente, terapias, bonos, onBack, onEdit, onD
           <span className="material-symbols-outlined text-primary mb-0.5 text-lg">medical_services</span>
           <span className="font-callout text-[8px] text-outline font-bold block">DIAGNÓSTICO</span>
           <span className="font-display font-bold text-on-surface text-[11px] block truncate">{paciente.diagnostico}</span>
+          {paciente.diagnosticoCie && (
+            <span className="text-[9px] font-bold text-emerald-700 block mt-1">📋 {paciente.diagnosticoCie}</span>
+          )}
         </div>
         <div className="bg-white p-3 rounded-2xl border border-outline-variant/20 shadow-sm">
           <span className="material-symbols-outlined text-secondary mb-0.5 text-lg">calendar_today</span>

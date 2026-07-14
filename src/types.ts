@@ -5,7 +5,8 @@ export interface Paciente {
   nombre: string;
   empresa: string; // Empresa promotora de salud / Aseguradora
   telefono: string;
-  diagnostico: string; // Diagnóstico fonoaudiológico
+  diagnostico: string; // Diagnóstico fonoaudiológico (texto libre)
+  diagnosticoCie?: string; // Código CIE-11 (ej: "6A62.0 — Afasia de Broca")
   progresoPlan: number; // Porcentaje de progreso (0-100)
   sesionesCompletadas: number;
   sesionesTotales: number;
