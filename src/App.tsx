@@ -60,6 +60,7 @@ export default function App() {
   const [isListeningForPaciente, setIsListeningForPaciente] = useState(false);
   const [voiceInputMessage, setVoiceInputMessage] = useState('');
   const [detectedPatientData, setDetectedPatientData] = useState<Paciente | null>(null);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   // Profile settings
   const [profesionalNombre, setProfesionalNombre] = useState(() => localStorage.getItem('silvia_prof_nombre') || "Dra. Silvia Margarita Pérez F.");
@@ -416,37 +417,84 @@ export default function App() {
 
   const parseAndProposePaciente = (text: string) => {
     const t = text.toLowerCase();
-    let nombre = "", id = "", empresa = "Colsanitas", diagnostico = "", edad = 30, telefono = "315 789 4512";
-    const nombreMatch = text.match(/(?:nuevo paciente|paciente)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+?)(?:\s*,?\s*(?:cédula|cedula|id|con cédula|con cedula|diagnóstico|diagnostico|de la empresa|aseguradora|de|en)|$)/i);
+    let nombre = "", id = "", empresa = "Colsanitas", diagnostico = "", edad = 30, telefono = "315 789 4512", direccion = "";
+    const nombreMatch = text.match(/(?:nuevo paciente|paciente)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+?)(?:\s*,?\s*(?:cédula|cedula|id|con cédula|con cedula|diagnóstico|diagnostico|de la empresa|aseguradora|teléfono|telefono|dirección|direccion|de|en)|$)/i);
     if (nombreMatch) nombre = nombreMatch[1].trim().replace(/\b\w/g, c => c.toUpperCase()); else nombre = "Paciente Nuevo";
     const idMatch = text.match(/(?:cédula|cedula|id|identificación|identificacion)\s*(?:de|de ciudadanía|de ciudadania)?\s*(\d+)/i);
-    if (idMatch) id = idMatch[1]; else { const numMatch = text.match(/\b(\d{6,10})\b/); if (numMatch) id = numMatch[1]; else id = Math.floor(1000000 + Math.random() * 9000000).toString(); }
+    if (idMatch) id = idMatch[1]; else { const numMatch = text.match(/\b(\d{6,10})\b/); if (numMatch) id = numMatch[1]; else id = ""; }
     if (t.includes("medisanitas")) empresa = "Medisanitas";
-    const diagMatch = text.match(/(?:diagnóstico|diagnostico|diagnóstico de|diagnostico de|con diagnóstico|con diagnostico)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+?)(?:\s*,?\s*(?:cédula|cedula|id|de la empresa|aseguradora|teléfono|telefono|edad)|$)/i);
+    const diagMatch = text.match(/(?:diagnóstico|diagnostico|diagnóstico de|diagnostico de|con diagnóstico|con diagnostico)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ\s]+?)(?:\s*,?\s*(?:cédula|cedula|id|de la empresa|aseguradora|teléfono|telefono|dirección|direccion|edad)|$)/i);
     if (diagMatch) diagnostico = diagMatch[1].trim().replace(/\b\w/g, c => c.toUpperCase());
-    else { const common = ["afasia", "disfagia", "disartria", "apraxia", "tartamudez", "disfonía", "retraso del lenguaje", "autismo"]; for (const cd of common) { if (t.includes(cd)) { diagnostico = cd.replace(/\b\w/g, c => c.toUpperCase()); break; } } if (!diagnostico) diagnostico = "Por definir"; }
+    else { const common = ["afasia", "disfagia", "disartria", "apraxia", "tartamudez", "disfonía", "retraso del lenguaje", "autismo"]; for (const cd of common) { if (t.includes(cd)) { diagnostico = cd.replace(/\b\w/g, c => c.toUpperCase()); break; } } if (!diagnostico) diagnostico = ""; }
     const edadMatch = text.match(/(\d+)\s*(?:años|anos|de edad)/i); if (edadMatch) edad = parseInt(edadMatch[1]) || 30;
     const telMatch = text.match(/(?:teléfono|telefono|celular|contacto)\s*(?:es|de)?\s*(\d[\d\s-]{6,12})/i); if (telMatch) telefono = telMatch[1].trim();
-    setDetectedPatientData({ id, nombre, empresa: empresa as any, telefono, diagnostico, sesionesTotales: 10, sesionesCompletadas: 0, progresoPlan: 0, proximaCita: "No programada", edad });
+    const dirMatch = text.match(/(?:dirección|direccion|ubicado en|vive en|reside en)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s#-]+?)(?:\s*,?\s*(?:cédula|cedula|teléfono|telefono|diagnóstico|diagnostico|edad|empresa|aseguradora)|$)/i);
+    if (dirMatch) direccion = dirMatch[1].trim().replace(/\b\w/g, c => c.toUpperCase());
+
+    const paciente: Paciente = { id, nombre, empresa: empresa as any, telefono, diagnostico: diagnostico || "Por definir", sesionesTotales: 10, sesionesCompletadas: 0, progresoPlan: 0, proximaCita: "No programada", edad, direccion: direccion || undefined };
+    setDetectedPatientData(paciente);
+
+    // Validate missing fields
+    const missing: string[] = [];
+    if (!nombre || nombre === "Paciente Nuevo") missing.push("Nombre completo");
+    if (!id) missing.push("Cédula / ID");
+    setMissingFields(missing);
+  };
+
+  const validateMissingFields = (p: Paciente | null) => {
+    if (!p) { setMissingFields([]); return; }
+    const missing: string[] = [];
+    if (!p.nombre || p.nombre === "Paciente Nuevo") missing.push("Nombre completo");
+    if (!p.id) missing.push("Cédula / ID");
+    setMissingFields(missing);
   };
 
   const startVoicePaciente = () => {
-    if (!SpeechRecognitionPolyfill) { alert("Web Speech API no soportada."); return; }
+    if (!SpeechRecognitionPolyfill) { alert("Web Speech API no soportada. Use Google Chrome."); return; }
+    // Stop any active recognition first
     if (isListeningGeneral) stopListeningGeneral();
+    if (isListeningForCita) setIsListeningForCita(false);
+
     setIsListeningForPaciente(true);
     setVoiceInputMessage("Escuchando... di los datos del paciente");
-    const rec = new SpeechRecognitionPolyfill();
-    rec.continuous = false; rec.interimResults = true; rec.lang = 'es-CO';
-    rec.onresult = (event: any) => {
-      let finalTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) { if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript; }
-      const fullText = finalTranscript || Array.from({ length: event.results.length }, (_, i) => event.results[i][0].transcript).join('');
-      setVoiceInputMessage(fullText);
-      if (finalTranscript) { parseAndProposePaciente(finalTranscript); rec.stop(); }
-    };
-    rec.onerror = () => setIsListeningForPaciente(false);
-    rec.onend = () => setIsListeningForPaciente(false);
-    rec.start();
+
+    try {
+      const rec = new SpeechRecognitionPolyfill();
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.lang = 'es-CO';
+
+      rec.onresult = (event: any) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+        }
+        const fullText = finalTranscript || Array.from({ length: event.results.length }, (_, i) => event.results[i][0].transcript).join('');
+        setVoiceInputMessage(fullText);
+        if (finalTranscript) {
+          parseAndProposePaciente(finalTranscript);
+          rec.stop();
+        }
+      };
+
+      rec.onerror = (event: any) => {
+        console.error("Voice patient error:", event.error);
+        setIsListeningForPaciente(false);
+        if (event.error === 'not-allowed') {
+          alert("Permiso de micrófono denegado. Habilítalo en la configuración del navegador.");
+        }
+      };
+
+      rec.onend = () => {
+        setIsListeningForPaciente(false);
+      };
+
+      rec.start();
+    } catch (e) {
+      console.error("Failed to start speech recognition:", e);
+      setIsListeningForPaciente(false);
+      alert("No se pudo iniciar el micrófono. Intente de nuevo.");
+    }
   };
 
   // ---- Camera / OCR ----
@@ -550,7 +598,7 @@ export default function App() {
 
         {/* PACIENTES */}
         {activeTab === 'pacientes' && activeView === 'pacientes' && !editingPatient && (
-          <PacientesView pacientes={pacientes} filteredPacientes={filteredPacientes} patientSearchQuery={patientSearchQuery} onSearchChange={setPatientSearchQuery} showPatientForm={showPatientForm} onToggleForm={() => setShowPatientForm(prev => !prev)} newPatient={newPatient} onNewPatientChange={setNewPatient} onCreatePatient={handleCreatePatient} detectedPatientData={detectedPatientData} onConfirmDetected={() => { if (!detectedPatientData?.nombre || !detectedPatientData?.id) { alert("Ingrese nombre y cédula."); return; } setPacientes(prev => [detectedPatientData, ...prev]); setDetectedPatientData(null); alert("Paciente creado con éxito ✓"); }} onDiscardDetected={() => setDetectedPatientData(null)} onStartVoicePaciente={startVoicePaciente} onSelectPatient={(id) => { setSelectedPacienteId(id); setActiveView('paciente_detalle'); }} />
+          <PacientesView pacientes={pacientes} filteredPacientes={filteredPacientes} patientSearchQuery={patientSearchQuery} onSearchChange={setPatientSearchQuery} showPatientForm={showPatientForm} onToggleForm={() => setShowPatientForm(prev => !prev)} newPatient={newPatient} onNewPatientChange={setNewPatient} onCreatePatient={handleCreatePatient} detectedPatientData={detectedPatientData} missingFields={missingFields} onConfirmDetected={() => { if (missingFields.length > 0) { alert(`Faltan campos: ${missingFields.join(', ')}. Dicta los datos faltantes.`); return; } if (!detectedPatientData?.nombre || !detectedPatientData?.id) { alert("Ingrese nombre y cédula."); return; } setPacientes(prev => [detectedPatientData, ...prev]); setDetectedPatientData(null); setMissingFields([]); alert("Paciente creado con éxito ✓"); }} onDiscardDetected={() => { setDetectedPatientData(null); setMissingFields([]); }} onDictMissingFields={startVoicePaciente} onStartVoicePaciente={startVoicePaciente} onSelectPatient={(id) => { setSelectedPacienteId(id); setActiveView('paciente_detalle'); }} />
         )}
 
         {/* EDITAR PACIENTE */}

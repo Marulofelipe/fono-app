@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Paciente } from '../../types';
 
 interface PacientesViewProps {
@@ -12,8 +12,10 @@ interface PacientesViewProps {
   onNewPatientChange: (p: any) => void;
   onCreatePatient: (e: React.FormEvent) => void;
   detectedPatientData: Paciente | null;
+  missingFields: string[];
   onConfirmDetected: () => void;
   onDiscardDetected: () => void;
+  onDictMissingFields: () => void;
   onStartVoicePaciente: () => void;
   onSelectPatient: (id: string) => void;
 }
@@ -21,8 +23,8 @@ interface PacientesViewProps {
 export function PacientesView({
   pacientes, filteredPacientes, patientSearchQuery, onSearchChange,
   showPatientForm, onToggleForm, newPatient, onNewPatientChange, onCreatePatient,
-  detectedPatientData, onConfirmDetected, onDiscardDetected,
-  onStartVoicePaciente, onSelectPatient
+  detectedPatientData, missingFields, onConfirmDetected, onDiscardDetected,
+  onDictMissingFields, onStartVoicePaciente, onSelectPatient
 }: PacientesViewProps) {
   return (
     <div className="flex flex-col gap-4 animate-fade-in py-2 flex-1">
@@ -42,18 +44,46 @@ export function PacientesView({
         </div>
       </div>
 
-      {/* Voice detection confirmation */}
+      {/* Voice detection confirmation — with missing fields handling */}
       {detectedPatientData && (
         <div className="bg-white border-2 border-primary/30 p-4 rounded-2xl shadow-xl flex flex-col gap-3 animate-fade-in my-3">
           <div className="flex items-center gap-2 border-b border-outline-variant/20 pb-2">
             <span className="material-symbols-outlined text-primary text-xl">person_search</span>
-            <h3 className="font-display font-bold text-primary text-sm">Confirmar Paciente Detectado</h3>
+            <h3 className="font-display font-bold text-primary text-sm">
+              {missingFields.length > 0 ? 'Faltan datos por dictar' : 'Confirmar Paciente Detectado'}
+            </h3>
           </div>
+
+          {/* Missing fields alert */}
+          {missingFields.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-600 text-lg">warning</span>
+                <p className="text-[11px] font-bold text-amber-800">
+                  Faltan {missingFields.length} campo{missingFields.length > 1 ? 's' : ''}:
+                </p>
+              </div>
+              <ul className="text-[10px] text-amber-700 font-medium space-y-0.5 pl-7">
+                {missingFields.map(f => <li key={f}>• {f}</li>)}
+              </ul>
+              <button
+                onClick={onDictMissingFields}
+                className="mt-1 w-full py-2 bg-amber-500 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1 active:scale-95"
+              >
+                <span className="material-symbols-outlined text-sm">mic</span>
+                Dictar solo los campos faltantes
+              </button>
+            </div>
+          )}
+
+          {/* Patient data preview */}
           <div className="space-y-2 text-xs">
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <span className="text-[9px] font-bold text-outline block">CÉDULA / ID</span>
-                <span className="font-semibold text-on-surface">{detectedPatientData.id || "Falta"}</span>
+                <span className={`font-semibold ${detectedPatientData.id ? 'text-on-surface' : 'text-red-500'}`}>
+                  {detectedPatientData.id || "❌ Falta"}
+                </span>
               </div>
               <div>
                 <span className="text-[9px] font-bold text-outline block">EDAD</span>
@@ -62,7 +92,9 @@ export function PacientesView({
             </div>
             <div>
               <span className="text-[9px] font-bold text-outline block">NOMBRE COMPLETO</span>
-              <span className="font-bold text-primary text-sm">{detectedPatientData.nombre || "Falta"}</span>
+              <span className={`font-bold text-sm ${detectedPatientData.nombre && detectedPatientData.nombre !== 'Paciente Nuevo' ? 'text-primary' : 'text-red-500'}`}>
+                {detectedPatientData.nombre && detectedPatientData.nombre !== 'Paciente Nuevo' ? detectedPatientData.nombre : "❌ Falta"}
+              </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -77,16 +109,33 @@ export function PacientesView({
               </div>
             </div>
             <div>
-              <span className="text-[9px] font-bold text-outline block">DIAGNÓSTICO FONOAUDIOLÓGICO</span>
-              <span className="font-semibold text-on-surface">{detectedPatientData.diagnostico || "Falta"}</span>
+              <span className="text-[9px] font-bold text-outline block">DIAGNÓSTICO</span>
+              <span className={`font-semibold ${detectedPatientData.diagnostico && detectedPatientData.diagnostico !== 'Por definir' ? 'text-on-surface' : 'text-amber-600'}`}>
+                {detectedPatientData.diagnostico && detectedPatientData.diagnostico !== 'Por definir' ? detectedPatientData.diagnostico : '⚠️ Por definir'}
+              </span>
             </div>
+            {detectedPatientData.direccion && (
+              <div>
+                <span className="text-[9px] font-bold text-outline block">DIRECCIÓN</span>
+                <span className="font-semibold text-on-surface">{detectedPatientData.direccion}</span>
+              </div>
+            )}
           </div>
+
           <div className="flex gap-2 pt-2 border-t border-outline-variant/10">
             <button onClick={onDiscardDetected} className="flex-1 py-2 border border-outline text-outline font-bold text-[10px] rounded-lg hover:bg-surface-container">
               Descartar
             </button>
-            <button onClick={onConfirmDetected} className="flex-1 py-2 bg-primary text-white font-bold text-[10px] rounded-lg shadow-md hover:bg-primary-container">
-              Guardar Paciente
+            <button
+              onClick={onConfirmDetected}
+              disabled={missingFields.length > 0}
+              className={`flex-1 py-2 font-bold text-[10px] rounded-lg shadow-md transition-all ${
+                missingFields.length > 0
+                  ? 'bg-outline/20 text-outline cursor-not-allowed'
+                  : 'bg-primary text-white hover:bg-primary-container active:scale-95'
+              }`}
+            >
+              {missingFields.length > 0 ? `Faltan ${missingFields.length} campos` : 'Guardar Paciente'}
             </button>
           </div>
         </div>
@@ -128,7 +177,7 @@ export function PacientesView({
               </div>
             </div>
             <div>
-              <label className="text-[8px] font-bold text-outline block mb-0.5">DIAGNÓSTICO FONOAUDIOLÓGICO</label>
+              <label className="text-[8px] font-bold text-outline block mb-0.5">DIAGNÓSTICO</label>
               <input type="text" placeholder="e.g. Afasia Motora" value={newPatient.diagnostico} onChange={(e) => onNewPatientChange({ ...newPatient, diagnostico: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-primary" />
             </div>
             <button type="submit" className="w-full bg-primary text-white font-bold py-2.5 rounded-xl shadow-md active:scale-95 text-[11px]">
