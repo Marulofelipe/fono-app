@@ -8,6 +8,7 @@ interface InicioViewProps {
   voiceText: string;
   agenda: Cita[];
   nextSessionPaciente: Paciente | null;
+  bonosValidosCount: number;
   onToggleMic: () => void;
   onOpenWaze: (p: Paciente) => void;
   onStartTherapyMode: (p: Paciente) => void;
@@ -15,10 +16,15 @@ interface InicioViewProps {
 
 export function InicioView({
   profesionalNombre, profesionalProfesion, isListeningGeneral, voiceText,
-  agenda, nextSessionPaciente, onToggleMic, onOpenWaze, onStartTherapyMode
+  agenda, nextSessionPaciente, bonosValidosCount, onToggleMic, onOpenWaze, onStartTherapyMode
 }: InicioViewProps) {
-  const citasHoy = agenda.filter(c => c.fecha === 'Hoy' || c.fecha === 'En 15 minutos').length + 1;
-  const bonosValidosCount = 2; // TODO: recibir como prop o calcular de bonos reales
+  // Citas de hoy: filtra por "Hoy" o calcula desde fechas relativas
+  const ahora = new Date();
+  const diaActual = ['domingo', 'lunes', 'martes', 'miércoles', 'miercoles', 'jueves', 'viernes', 'sábado', 'sabado'][ahora.getDay()];
+  const citasHoy = agenda.filter(c => {
+    const f = c.fecha.toLowerCase();
+    return f === 'hoy' || f.includes('en 15') || f.includes(diaActual);
+  }).length;
 
   return (
     <div className="flex flex-col items-center animate-fade-in pt-0 pb-2 flex-1">

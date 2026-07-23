@@ -35,11 +35,7 @@ interface TherapySessionState {
   startTime?: string | null;
 }
 
-const INITIAL_AGENDA: Cita[] = [
-  { id: "c_1", pacienteId: "1029384", pacienteNombre: "Eduardo Castro", fecha: "Mañana", hora: "08:00 am" },
-  { id: "c_2", pacienteId: "1056342", pacienteNombre: "Isabella Gómez Ortiz", fecha: "Viernes", hora: "02:00 pm" },
-  { id: "c_3", pacienteId: "1087452", pacienteNombre: "Valentina Meza Ruiz", fecha: "Lunes", hora: "04:00 pm" },
-];
+const INITIAL_AGENDA: Cita[] = [];
 
 export default function App() {
   // ---- State ----
@@ -760,7 +756,62 @@ export default function App() {
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => { if (typeof reader.result === 'string') { setProfilePic(reader.result); localStorage.setItem('silvia_profile_pic', reader.result); alert("¡Foto de perfil actualizada!"); } }; reader.readAsDataURL(file); } };
 
   const filteredPacientes = pacientes.filter(p => p.nombre.toLowerCase().includes(patientSearchQuery.toLowerCase()) || p.diagnostico.toLowerCase().includes(patientSearchQuery.toLowerCase()) || p.id.includes(patientSearchQuery));
-  const nextSessionPaciente = pacientes.find(p => p.id === '1045920') || pacientes[0];
+  // Calcula el siguiente paciente basado en la agenda y la hora actual del celular
+  const getNextSessionPaciente = (): Paciente | null => {
+    if (agenda.length === 0 || pacientes.length === 0) return null;
+    const ahora = new Date();
+    const diaActual = ahora.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
+    const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
+
+    // Mapea días relativos a fechas reales
+    const parsearFecha = (fechaStr: string): Date | null => {
+      const f = fechaStr.toLowerCase().trim();
+      if (f === 'hoy') return new Date();
+      if (f === 'mañana' || f === 'manana') { const d = new Date(); d.setDate(d.getDate() + 1); return d; }
+      // Buscar día de la semana
+      for (let i = 0; i < diasSemana.length; i++) {
+        if (f.includes(diasSemana[i])) {
+          const d = new Date();
+          let diff = i - diaActual;
+          if (diff <= 0) diff += 7; // si ya pasó, siguiente semana
+          d.setDate(d.getDate() + diff);
+          return d;
+        }
+      }
+      return null; // No se pudo parsear
+    };
+
+    const parsearHora = (horaStr: string): number => {
+      const match = horaStr.match(/(\d+):?(\d+)?\s*(am|pm)?/i);
+      if (!match) return 0;
+      let h = parseInt(match[1]);
+      const m = parseInt(match[2] || '0');
+      const period = (match[3] || 'am').toLowerCase();
+      if (period === 'pm' && h !== 12) h += 12;
+      if (period === 'am' && h === 12) h = 0;
+      return h * 60 + m;
+    };
+
+    // Ordena las citas por proximidad: más cercanas primero
+    const ahoraTimestamp = ahora.getTime();
+    const citasOrdenadas = [...agenda]
+      .map(cita => {
+        const fecha = parsearFecha(cita.fecha);
+        if (!fecha) return { cita, timestamp: Infinity, minutos: Infinity };
+        const minutos = parsearHora(cita.hora);
+        fecha.setHours(Math.floor(minutos / 60), minutos % 60, 0, 0);
+        return { cita, timestamp: fecha.getTime(), minutos };
+      })
+      .filter(c => c.timestamp > ahoraTimestamp) // Solo futuras
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    if (citasOrdenadas.length === 0) return null;
+    const proximaCita = citasOrdenadas[0].cita;
+    return pacientes.find(p => p.id === proximaCita.pacienteId) || null;
+  };
+
+  const nextSessionPaciente = getNextSessionPaciente();
 
   // ---- Navigation ----
   const navigateTo = (tab: TabId) => { setActiveTab(tab); setActiveView(tab); setSelectedPacienteId(null); };
@@ -778,7 +829,7 @@ export default function App() {
       <main className={`px-5 flex-1 flex flex-col ${activeTab === 'inicio' ? 'pt-[68px]' : 'pt-20'}`}>
         {/* INICIO */}
         {activeTab === 'inicio' && activeView === 'inicio' && (
-          <InicioView profesionalNombre={profesionalNombre} profesionalProfesion={profesionalProfesion} isListeningGeneral={isListeningGeneral} voiceText={voiceText} agenda={agenda} nextSessionPaciente={nextSessionPaciente || null} onToggleMic={toggleListeningGeneral} onOpenWaze={openWaze} onStartTherapyMode={startTherapyMode} />
+          <InicioView profesionalNombre={profesionalNombre} profesionalProfesion={profesionalProfesion} isListeningGeneral={isListeningGeneral} voiceText={voiceText} agenda={agenda} nextSessionPaciente={nextSessionPaciente || null} bonosValidosCount={bonos.filter(b => b.estado === 'Válido').length} onToggleMic={toggleListeningGeneral} onOpenWaze={openWaze} onStartTherapyMode={startTherapyMode} />
         )}
 
         {/* SESIÓN ACTIVA */}
