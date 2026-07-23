@@ -219,6 +219,21 @@ export default function App() {
     window.setTimeout(() => setTherapyToastMessage(null), 4200);
   };
 
+  // Confirmar llegada manualmente — arranca el timer sin depender del GPS
+  const confirmarLlegada = () => {
+    if (!therapySessionState.pacienteId) return;
+    const paciente = pacientes.find(p => p.id === therapySessionState.pacienteId);
+    if (!paciente) return;
+    const ahora = new Date().toISOString();
+    setHasArrivedAtHome(true);
+    setTherapySessionState(prev => ({ ...prev, arrivalTime: ahora, startTime: ahora }));
+    therapyTimer.reset(1800);
+    therapyTimer.start();
+    setTherapyToastMessage(`✅ Llegada confirmada. Terapia iniciada para ${paciente.nombre}.`);
+    playCompletionFeedback();
+    window.setTimeout(() => setTherapyToastMessage(null), 4000);
+  };
+
   const startTherapySession = (paciente: Paciente) => {
     setSessionPatient(paciente);
     setActiveView('sesion_activa');
@@ -834,7 +849,7 @@ export default function App() {
 
         {/* SESIÓN ACTIVA */}
         {activeView === 'sesion_activa' && sessionPatient && (
-          <SesionActivaView sessionPatient={sessionPatient} isSessionRecording={isSessionRecording} sessionDuration={sessionDuration} activeTranscriptBlocks={activeTranscriptBlocks} newBlockText={newBlockText} newBlockType={newBlockType} therapyTimer={therapyTimer} therapySessionState={therapySessionState} therapyRadius={therapyRadius} patientDistance={patientDistance} hasArrivedAtHome={hasArrivedAtHome} onNewBlockTextChange={setNewBlockText} onNewBlockTypeChange={setNewBlockType} onAddManualBlock={handleAddNewManualBlock} onPauseResume={pauseTherapySession} onFinishAndSave={finishAndSaveSession} onOpenWaze={openWaze} onFinalizeTherapy={handleTherapyFinalize} />
+          <SesionActivaView sessionPatient={sessionPatient} isSessionRecording={isSessionRecording} sessionDuration={sessionDuration} activeTranscriptBlocks={activeTranscriptBlocks} newBlockText={newBlockText} newBlockType={newBlockType} therapyTimer={therapyTimer} therapySessionState={therapySessionState} therapyRadius={therapyRadius} patientDistance={patientDistance} hasArrivedAtHome={hasArrivedAtHome} onNewBlockTextChange={setNewBlockText} onNewBlockTypeChange={setNewBlockType} onAddManualBlock={handleAddNewManualBlock} onPauseResume={pauseTherapySession} onFinishAndSave={finishAndSaveSession} onOpenWaze={openWaze} onFinalizeTherapy={handleTherapyFinalize} onConfirmArrival={confirmarLlegada} />
         )}
 
         {/* AGENDA */}

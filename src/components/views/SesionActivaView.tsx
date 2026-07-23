@@ -31,6 +31,7 @@ interface SesionActivaViewProps {
   onFinishAndSave: () => void;
   onOpenWaze: (p: Paciente) => void;
   onFinalizeTherapy: () => void;
+  onConfirmArrival: () => void;
 }
 
 export function SesionActivaView({
@@ -38,7 +39,7 @@ export function SesionActivaView({
   newBlockText, newBlockType, therapyTimer, therapySessionState, therapyRadius,
   patientDistance, hasArrivedAtHome,
   onNewBlockTextChange, onNewBlockTypeChange, onAddManualBlock,
-  onPauseResume, onFinishAndSave, onOpenWaze, onFinalizeTherapy
+  onPauseResume, onFinishAndSave, onOpenWaze, onFinalizeTherapy, onConfirmArrival
 }: SesionActivaViewProps) {
   return (
     <div className="flex flex-col gap-4 animate-fade-in py-2">
@@ -64,11 +65,26 @@ export function SesionActivaView({
               </div>
             </div>
           </div>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[10px] text-on-surface-variant leading-relaxed">
-              {hasArrivedAtHome ? 'Terapia iniciada tras llegada al domicilio.' : 'Sigue la ruta y espera la confirmación automática.'}
-            </p>
-            <div className="flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-col gap-3">
+            {!hasArrivedAtHome ? (
+              <>
+                <p className="text-[10px] text-on-surface-variant leading-relaxed text-center">
+                  📍 El GPS te está siguiendo. Cuando llegues, presiona el botón o espera la detección automática a {therapyRadius} metros.
+                </p>
+                <button
+                  onClick={onConfirmArrival}
+                  className="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all hover:bg-emerald-700 animate-pulse"
+                >
+                  <span className="material-symbols-outlined text-xl">where_to_vote</span>
+                  ¡Ya llegué! — Confirmar Llegada
+                </button>
+              </>
+            ) : (
+              <p className="text-[10px] text-on-surface-variant leading-relaxed">
+                ✅ Terapia iniciada tras llegada al domicilio.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2 justify-center">
               <button onClick={() => onOpenWaze(sessionPatient)} className="py-2 px-3 rounded-2xl bg-secondary text-primary text-[10px] font-bold hover:bg-secondary/90 transition-colors">Navegar</button>
               <button onClick={onFinalizeTherapy} className="py-2 px-3 rounded-2xl bg-primary text-white text-[10px] font-bold hover:bg-primary/90 transition-colors">Finalizar Terapia</button>
             </div>
