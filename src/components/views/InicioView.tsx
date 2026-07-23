@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cita } from '../../types';
+import { Cita, Paciente } from '../../types';
 
 interface InicioViewProps {
   profesionalNombre: string;
@@ -7,11 +7,18 @@ interface InicioViewProps {
   isListeningGeneral: boolean;
   voiceText: string;
   agenda: Cita[];
+  nextSessionPaciente: Paciente | null;
   onToggleMic: () => void;
+  onOpenWaze: (p: Paciente) => void;
+  onStartTherapyMode: (p: Paciente) => void;
 }
 
-export function InicioView({ profesionalNombre, profesionalProfesion, isListeningGeneral, voiceText, agenda, onToggleMic }: InicioViewProps) {
+export function InicioView({
+  profesionalNombre, profesionalProfesion, isListeningGeneral, voiceText,
+  agenda, nextSessionPaciente, onToggleMic, onOpenWaze, onStartTherapyMode
+}: InicioViewProps) {
   const citasHoy = agenda.filter(c => c.fecha === 'Hoy' || c.fecha === 'En 15 minutos').length + 1;
+  const bonosValidosCount = 2; // TODO: recibir como prop o calcular de bonos reales
 
   return (
     <div className="flex flex-col items-center animate-fade-in pt-0 pb-2 flex-1">
@@ -65,9 +72,50 @@ export function InicioView({ profesionalNombre, profesionalProfesion, isListenin
         <div className="bg-surface-container-lowest p-3 rounded-2xl luxury-shadow border border-outline-variant/20 flex flex-col items-center text-center">
           <span className="material-symbols-outlined text-secondary mb-1 text-xl">payments</span>
           <p className="font-callout text-[9px] font-bold text-outline uppercase tracking-wider">Bonos Válidos</p>
-          <p className="font-display font-bold text-secondary text-base">2 Activos</p>
+          <p className="font-display font-bold text-secondary text-base">{bonosValidosCount} Activos</p>
         </div>
       </div>
+
+      {/* Siguiente en Agenda — Bento Card */}
+      {nextSessionPaciente && (
+        <div className="w-full bg-primary-container/10 p-4 rounded-2xl luxury-shadow border border-primary/10 mb-4">
+          <div className="flex justify-between items-center mb-2.5">
+            <h3 className="font-display font-bold text-primary text-xs">Siguiente en Agenda</h3>
+            <span className="px-2 py-0.5 bg-primary text-white font-callout text-[9px] font-bold rounded-full uppercase tracking-wider">En 15 min</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+              <span className="material-symbols-outlined text-primary text-xl">child_care</span>
+            </div>
+            <div className="flex-1">
+              <p className="font-display font-bold text-on-surface text-xs">{nextSessionPaciente.nombre}</p>
+              <p className="text-[10px] text-on-surface-variant font-medium">{nextSessionPaciente.diagnostico}</p>
+            </div>
+          </div>
+          <div className="mt-2.5 pt-2.5 border-t border-primary/10 flex flex-col gap-2">
+            <div className="flex items-center justify-between text-[9px] font-semibold text-outline">
+              <span>Aseguradora: {nextSessionPaciente.empresa}</span>
+              <span>{nextSessionPaciente.direccion || 'Sin dirección guardada'}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => onOpenWaze(nextSessionPaciente)}
+                className="py-2 rounded-xl bg-secondary text-white font-bold text-[11px] flex items-center justify-center gap-1 hover:bg-secondary/90 active:scale-95"
+              >
+                <span className="material-symbols-outlined text-sm">directions_car</span>
+                Navegar
+              </button>
+              <button
+                onClick={() => onStartTherapyMode(nextSessionPaciente)}
+                className="py-2 rounded-xl border border-primary text-primary font-bold text-[11px] flex items-center justify-center gap-1 hover:bg-primary/10 active:scale-95"
+              >
+                <span className="material-symbols-outlined text-sm">play_arrow</span>
+                Iniciar Terapia
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

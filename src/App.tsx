@@ -778,7 +778,7 @@ export default function App() {
       <main className={`px-5 flex-1 flex flex-col ${activeTab === 'inicio' ? 'pt-[68px]' : 'pt-20'}`}>
         {/* INICIO */}
         {activeTab === 'inicio' && activeView === 'inicio' && (
-          <InicioView profesionalNombre={profesionalNombre} profesionalProfesion={profesionalProfesion} isListeningGeneral={isListeningGeneral} voiceText={voiceText} agenda={agenda} onToggleMic={toggleListeningGeneral} />
+          <InicioView profesionalNombre={profesionalNombre} profesionalProfesion={profesionalProfesion} isListeningGeneral={isListeningGeneral} voiceText={voiceText} agenda={agenda} nextSessionPaciente={nextSessionPaciente || null} onToggleMic={toggleListeningGeneral} onOpenWaze={openWaze} onStartTherapyMode={startTherapyMode} />
         )}
 
         {/* SESIÓN ACTIVA */}
